@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+import sys
 
 from fallbacks import pygame
 
@@ -32,7 +33,7 @@ SCENARIOS = {
 MAX_AGENTS = 4
 
 # Round properties
-MAX_STEPS = 400
+MAX_STEPS = 200  #actually 400
 
 # GUI properties
 GRID_SIZE = 30

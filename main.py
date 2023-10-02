@@ -11,7 +11,6 @@ from replay import ReplayWorld
 
 ESCAPE_KEYS = (pygame.K_q, pygame.K_ESCAPE)
 
-
 class Timekeeper:
     def __init__(self, interval):
         self.interval = interval
@@ -63,6 +62,10 @@ def world_controller(world, n_rounds, *,
                         key_pressed = event.key
                         if key_pressed in ESCAPE_KEYS:
                             world.end_round()
+
+
+
+
                         elif key_pressed in s.INPUT_MAP:
                             user_input = s.INPUT_MAP[key_pressed]
 
@@ -108,7 +111,7 @@ def main(argv = None):
                              help="First … agents should be set to training mode")
     play_parser.add_argument("--continue-without-training", default=False, action="store_true")
     # play_parser.add_argument("--single-process", default=False, action="store_true")
-
+    play_parser.add_argument("--save-winner-game", type=bool, default=False)
     play_parser.add_argument("--scenario", default="classic", choices=s.SCENARIOS)
 
     play_parser.add_argument("--seed", type=int, help="Reset the world's random number generator to a known number for reproducibility")

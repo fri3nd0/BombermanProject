@@ -18,7 +18,7 @@ from fallbacks import pygame
 from items import Coin, Explosion, Bomb
 
 WorldArgs = namedtuple("WorldArgs",
-                       ["no_gui", "fps", "turn_based", "update_interval", "save_replay", "replay", "make_video", "continue_without_training", "log_dir", "save_stats", "match_name", "seed", "silence_errors", "scenario"])
+                       ["no_gui", "fps", "turn_based", "update_interval", "save_replay", "replay", "make_video", "continue_without_training", "log_dir", "save_stats", "match_name", "seed", "silence_errors", "scenario", "save_winner_game"])
 
 
 class Trophy:
@@ -52,6 +52,7 @@ class GenericWorld:
 
         self.round = 0
         self.round_statistics = {}
+        self.round_scores = []
 
         self.running = False
 
@@ -271,6 +272,7 @@ class GenericWorld:
             raise ValueError('End-of-round requested while no round was running')
         # Wait in case there is still a game step running
         self.running = False
+        self.round_scores.append([a.score for a in self.agents])
 
         for a in self.agents:
             a.note_stat("score", a.score)
@@ -309,8 +311,14 @@ class GenericWorld:
             self.end_round()
 
         results = {'by_agent': {a.name: a.lifetime_statistics for a in self.agents}}
-        for a in self.agents:
+
+
+        for i, a in enumerate(self.agents):
             results['by_agent'][a.name]['score'] = a.total_score
+            results['by_agent'][a.name]['scores'] = [s[i] for s in self.round_scores]
+
+
+
         results['by_round'] = self.round_statistics
 
         if self.args.save_stats is not False:
@@ -393,7 +401,7 @@ class BombeRLeWorld(GenericWorld):
 
         return arena, coins, active_agents
 
-    def get_state_for_agent(self, agent: Agent):
+    def get_state_for_agent(self, agent: Agent):      #This is where game_state originates
         if agent.dead:
             return None
 
@@ -490,8 +498,17 @@ class BombeRLeWorld(GenericWorld):
             a.add_event(e.SURVIVED_ROUND)
 
         # Send final event to agents that expect them
+        agents = self.agents
+        leading = max(agents, key=lambda a: a.score)
+        #print(leading)
         for a in self.agents:
-            if a.train:
+
+            if self.args.save_winner_game:
+                if a.train and a==leading:
+                    #print("Worked")
+                    #print(a)
+                    a.round_ended()
+            elif a.train:
                 a.round_ended()
 
         # Save course of the game for future replay
@@ -502,6 +519,8 @@ class BombeRLeWorld(GenericWorld):
                 pickle.dump(self.replay, f)
 
     def end(self):
+        for a in self.agents:
+            print(a.display_name,"  ",a.total_score)
         super().end()
         self.logger.info('SHUT DOWN')
         for a in self.agents:
